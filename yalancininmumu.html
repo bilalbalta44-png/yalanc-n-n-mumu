@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yalancının Mumu - Parti Oyunu</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darker: '#090d16',
+                        card: '#111827',
+                        neonPurple: '#8b5cf6',
+                        neonPink: '#ec4899',
+                        neonMint: '#10b981',
+                    },
+                    animation: {
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'slide-in': 'slideIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-6deg)' },
+                            '50%': { transform: 'rotate(6deg)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { opacity: '0.4', transform: 'scale(1)' },
+                            '50%': { opacity: '0.8', transform: 'scale(1.05)' },
+                        },
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-handwriting { font-family: 'Dancing Script', cursive; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+
+        /* Blur reveal effects */
+        .blur-secret {
+            filter: blur(16px);
+            user-select: none;
+            transition: filter 0.4s ease, transform 0.3s ease;
+        }
+        .blur-secret.revealed {
+            filter: blur(0px);
+        }
+
+        /* Shimmer animation on buttons */
+        .btn-shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-shimmer::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(60deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transform: rotate(30deg);
+            transition: all 0.5s;
+        }
+        .btn-shimmer:hover::after {
+            left: 100%;
+        }
+    </style>
+</head>
+<body class="bg-[#090d16] text-slate-100 min-h-screen flex flex-col justify-between relative overflow-x-hidden selection:bg-pink-500 selection:text-white">
+
+    <!-- Glowing Background Lights -->
+    <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none animate-pulse-glow"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-96 h-96 bg-pink-600/20 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" style="animation-delay: 1s;"></div>
+
+    <!-- HEADER -->
+    <header class="w-full py-4 px-4 border-b border-slate-800/80 bg-[#090d16]/80 backdrop-blur-xl sticky top-0 z-40">
+        <div class="max-w-xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl animate-bounce">🕯️</span>
+                <h1 class="text-xl font-black tracking-wider bg-gradient-to-r from-purple-400 via-pink-500 to-rose-400 bg-clip-text text-transparent">
+                    YALANCININ MUMU
+                </h1>
+            </div>
+            <span id="game-status-badge" class="text-[11px] font-bold tracking-wider uppercase text-purple-300 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/30 backdrop-blur-md">
+                Lobi
+            </span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center z-10">
+
+        <!-- 1. LOBBY SCREEN -->
+        <div id="screen-lobby" class="space-y-5 animate-slide-in">
+            <div class="text-center space-y-1">
+                <h2 class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Oyun Masası</h2>
+                <p class="text-slate-400 text-xs">Oyuncuları ekleyin, kategorileri ve zorluğu ayarlayın.</p>
+            </div>
+
+            <!-- Add Player Form -->
+            <form id="form-add-player" class="flex gap-2">
+                <input type="text" id="input-player-name" placeholder="Oyuncu adı yazın..." autocomplete="off"
+                    class="flex-1 bg-slate-900/90 border border-slate-800 rounded-2xl px-4 py-3.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-sm transition-all">
+                <button type="submit" 
+                    class="btn-shimmer bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold px-6 py-3.5 rounded-2xl transition-all shadow-lg shadow-purple-600/25 active:scale-95 text-sm cursor-pointer flex items-center gap-1">
+                    <span>Ekle</span>
+                    <span class="text-lg">+</span>
+                </button>
+            </form>
+
+            <!-- Players List Container -->
+            <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 backdrop-blur-md">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Oyuncular (En Az 3)</span>
+                    <span id="player-count" class="text-xs font-black text-pink-400 bg-pink-500/10 px-2.5 py-1 rounded-full border border-pink-500/20">0 Oyuncu</span>
+                </div>
+                <div id="players-list" class="space-y-2 max-h-44 overflow-y-auto pr-1">
+                    <div id="empty-players" class="text-center py-6 text-slate-500 text-xs italic">Henüz oyuncu eklenmedi.</div>
+                </div>
+            </div>
+
+            <!-- Categories Selection -->
+            <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 space-y-3 backdrop-blur-md">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold uppercase tracking-wider text-purple-400">Kategoriler</span>
+                    <button type="button" id="btn-toggle-all-categories" class="text-[11px] font-semibold text-pink-400 hover:underline">Tümünü Seç/Kaldır</button>
+                </div>
+                <div id="categories-container" class="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                    <!-- Dynamic categories injection -->
+                </div>
+            </div>
+
+            <!-- Settings Card -->
+            <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 space-y-4 backdrop-blur-md">
+                <!-- Difficulty Slider (1: Easy, 2: Medium, 3: Hard, 4: Ultra Hard) -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-semibold text-slate-300">İpucu Zorluğu (Sahtekar İçin)</label>
+                        <span id="difficulty-label" class="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">Kolay</span>
+                    </div>
+                    <input type="range" id="slider-difficulty" min="1" max="4" value="1" step="1" 
+                        class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-500">
+                    <div class="flex justify-between text-[10px] text-slate-500 font-bold px-0.5">
+                        <span>Kolay</span>
+                        <span>Orta</span>
+                        <span>Zor</span>
+                        <span class="text-rose-400">Ultra Zor 🔥</span>
+                    </div>
+                </div>
+
+                <!-- Timer Select -->
+                <div class="space-y-1">
+                    <label class="text-xs font-semibold text-slate-300">Tartışma Süresi</label>
+                    <select id="select-timer" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500">
+                        <option value="1">1 Dakika</option>
+                        <option value="2" selected>2 Dakika</option>
+                        <option value="3">3 Dakika</option>
+                        <option value="5">5 Dakika</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Start Game Button -->
+            <button id="btn-start-game" disabled
+                class="btn-shimmer w-full bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:to-rose-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-purple-600/20 active:scale-98 text-sm cursor-pointer uppercase tracking-wider">
+                Oyunu Başlat
+            </button>
+        </div>
+
+        <!-- 2. HOT-SEAT PASS SCREEN -->
+        <div id="screen-pass" class="hidden space-y-6 text-center py-6 animate-slide-in">
+            <div class="w-20 h-20 bg-gradient-to-tr from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-3xl mx-auto flex items-center justify-center text-purple-400 shadow-xl shadow-purple-500/10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 animate-wiggle text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div class="space-y-2">
+                <span class="text-xs font-bold uppercase tracking-widest text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20">Cihazı Devret</span>
+                <h2 id="pass-player-name" class="text-3xl font-black text-white">Oyuncu Adı</h2>
+            </div>
+            <p class="text-slate-400 text-xs max-w-xs mx-auto bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl backdrop-blur-md">
+                Ekranı sadece bu oyuncu görsün. Gizli rolünü görmek için aşağıdaki butona <strong class="text-purple-300">BASILI TUTUN</strong>.
+            </p>
+
+            <!-- Hold To Reveal Button Container -->
+            <div class="relative max-w-xs mx-auto">
+                <button id="btn-hold-reveal" 
+                    class="w-full bg-slate-900 hover:bg-slate-800 border border-purple-500/40 text-purple-300 font-bold py-4 rounded-2xl transition-all active:scale-95 text-sm cursor-pointer select-none flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>Rolü Görmek İçin Basılı Tut</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. ROLE REVEAL SCREEN (HOLD STATE) -->
+        <div id="screen-reveal" class="hidden space-y-6 text-center py-4 animate-slide-in">
+            <div class="space-y-1">
+                <span class="text-xs font-semibold text-slate-400">Gizli Bilgi Ekranı</span>
+                <h2 id="reveal-player-title" class="text-lg font-bold text-slate-200"></h2>
+            </div>
+
+            <!-- Role Card with Blur -->
+            <div id="role-card" class="p-6 rounded-3xl border transition-all duration-300 relative overflow-hidden backdrop-blur-md">
+                <div id="role-blur-overlay" class="blur-secret">
+                    <div id="role-content" class="space-y-3">
+                        <!-- Dynamic role text injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-[11px] text-slate-500 italic">Bilgiyi gizlemek için parmağınızı çekin, ardından sonraki oyuncuya geçin.</p>
+
+            <button id="btn-next-player" 
+                class="btn-shimmer w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3.5 rounded-2xl transition-all shadow-xl shadow-purple-600/20 active:scale-98 text-sm cursor-pointer">
+                Gizle ve Devam Et &rarr;
+            </button>
+        </div>
+
+        <!-- 4. ACTIVE TIMER / DISCUSSION SCREEN -->
+        <div id="screen-timer" class="hidden space-y-6 text-center py-6 animate-slide-in">
+            <div class="space-y-2">
+                <span class="text-xs font-extrabold uppercase tracking-widest text-purple-400 bg-purple-500/20 px-3.5 py-1 rounded-full border border-purple-500/30">Tartışma & İpucu Zamanı</span>
+                <h2 class="text-xl font-bold text-white">Herkes Sırayla İpucunu Versin!</h2>
+            </div>
+
+            <!-- Big Clock Display -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 space-y-2 backdrop-blur-xl relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none"></div>
+                <div id="timer-display" class="text-6xl font-black font-mono tracking-wider bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">02:00</div>
+                <p class="text-xs text-slate-500">Süre dolunca zil çalacak ve oylamaya geçilecektir.</p>
+            </div>
+
+            <button id="btn-skip-timer" 
+                class="w-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-semibold py-3.5 rounded-2xl transition-all active:scale-98 text-xs cursor-pointer">
+                Süreyi Bitişini Bekleme &rarr; Oylamaya Geç
+            </button>
+        </div>
+
+        <!-- 5. VOTING SCREEN -->
+        <div id="screen-voting" class="hidden space-y-5 text-center py-4 animate-slide-in">
+            <div class="space-y-1">
+                <span class="text-xs font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">Oylama Fazı</span>
+                <h2 class="text-2xl font-black text-white">Mumu Söndürülecek Sahtekar Kim?</h2>
+                <p id="voting-turn-label" class="text-xs text-slate-400">Oy kullanan: <strong id="voter-name" class="text-purple-400"></strong></p>
+            </div>
+
+            <div id="voting-options" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                <!-- Dynamic vote buttons injected here -->
+            </div>
+        </div>
+
+        <!-- 6. RESULT SCREEN -->
+        <div id="screen-result" class="hidden space-y-6 text-center py-6 animate-slide-in">
+            <div id="result-header-box" class="p-6 rounded-3xl border space-y-3 backdrop-blur-md">
+                <div id="result-icon" class="text-4xl"></div>
+                <h2 id="result-title" class="text-2xl font-black tracking-tight"></h2>
+                <p id="result-desc" class="text-xs font-medium text-slate-300 leading-relaxed"></p>
+            </div>
+
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 text-left space-y-2.5 text-xs backdrop-blur-md">
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">Gerçek Kelime:</span>
+                    <strong id="result-real-word" class="text-purple-300 font-bold"></strong>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">Sahtekara Verilen İpucu:</span>
+                    <strong id="result-hint-word" class="text-amber-400 font-bold"></strong>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Gerçek Sahtekar:</span>
+                    <strong id="result-faker-name" class="text-rose-400 font-bold"></strong>
+                </div>
+            </div>
+
+            <button id="btn-restart" 
+                class="btn-shimmer w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-purple-600/20 active:scale-98 text-sm cursor-pointer">
+                Yeni Tur / Lobiye Dön
+            </button>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full py-4 text-center border-t border-slate-900/80 bg-[#090d16]/80 backdrop-blur-md z-10">
+        <p class="text-[11px] text-slate-500">
+            Yalancının Mumu &bull; Parti Oyunu
+        </p>
+        <p class="font-handwriting text-lg text-pink-400/80 mt-0.5 font-bold tracking-wide">
+            zayre
+        </p>
+    </footer>
+
+    <!-- Custom Modal -->
+    <div id="modal-message" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl animate-slide-in">
+            <div id="modal-text" class="text-slate-200 text-sm font-medium"></div>
+            <button id="modal-close" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 rounded-xl text-xs transition-all cursor-pointer">
+                Tamam
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Player Emojis Pool
+        const avatarEmojis = ["🦊", "🕵️‍♂️", "🎭", "🤡", "🦄", "🐲", "🍕", "🚀", "🥷", "🦁", "🦉", "👽", "🤖", "🎃", "🎩", "👑"];
+
+        // Category Database with Words & 4 Difficulty Hints (Single-word hints)
+        const categoryDatabase = {
+            "ulasim": {
+                name: "Ulaşım & Taşıtlar",
+                words: [
+                    { word: "Uçak", easy: "Kanat", medium: "Havalimanı", hard: "İrtifa", ultra: "Kuş" },
+                    { word: "Taksi", easy: "Sarı", medium: "Taksimetre", hard: "Durak", ultra: "Bozuk" },
+                    { word: "Metro", easy: "Yeraltı", medium: "Tünel", hard: "Vagon", ultra: "Karanlık" },
+                    { word: "Gemi", easy: "Deniz", medium: "Liman", hard: "Güverte", ultra: "Titanik" },
+                    { word: "Helikopter", easy: "Pervane", medium: "Pist", hard: "Hava", ultra: "Rüzgar" }
+                ]
+            },
+            "yiyecek": {
+                name: "Yiyecek & İçecek",
+                words: [
+                    { word: "Pizza", easy: "Dilim", medium: "Peynir", hard: "İtalya", ultra: "Kutu" },
+                    { word: "Kahve", easy: "Kafein", medium: "Fincan", hard: "Sabah", ultra: "Uykusuz" },
+                    { word: "Çiğköfte", easy: "Lavaş", medium: "Acı", hard: "Etsiz", ultra: "Tavan" },
+                    { word: "Döner", easy: "Ekmek", medium: "Tavuk", hard: "Yaprak", ultra: "Dönerci" },
+                    { word: "Künefe", easy: "Şerbet", medium: "Peynir", hard: "Hatay", ultra: "Sıcak" }
+                ]
+            },
+            "hayvanlar": {
+                name: "Hayvanlar Alemi",
+                words: [
+                    { word: "Köpek", easy: "Havlamak", medium: "Tasma", hard: "Sadık", ultra: "Kemik" },
+                    { word: "Kedi", easy: "Miyav", medium: "Tüy", hard: "Bıyık", ultra: "Nankör" },
+                    { word: "Aslan", easy: "Yele", medium: "Orman", hard: "Kral", ultra: "Afrika" },
+                    { word: "Karakulak", easy: "Kulak", medium: "Vahşi", hard: "Anadolu", ultra: "Kedi" },
+                    { word: "Yılan", easy: "Sürüngen", medium: "Zehir", hard: "Deri", ultra: "Bozuk" }
+                ]
+            },
+            "teknoloji": {
+                name: "Teknoloji",
+                words: [
+                    { word: "Telefon", easy: "Ekran", medium: "Şarj", hard: "Arama", ultra: "Dokunmatik" },
+                    { word: "Bilgisayar", easy: "Klavye", medium: "İşlemci", hard: "Masaüstü", ultra: "Yazılım" },
+                    { word: "Televizyon", easy: "Kumanda", medium: "Kanal", hard: "Yayın", ultra: "Kutu" },
+                    { word: "Robot", easy: "Yapay", medium: "Metal", hard: "Kod", ultra: "Gelecek" }
+                ]
+            },
+            "meslekler": {
+                name: "Meslekler",
+                words: [
+                    { word: "Doktor", easy: "Hastane", medium: "Önlük", hard: "Reçete", ultra: "Sağlık" },
+                    { word: "Polis", easy: "Uniforma", medium: "Telsiz", hard: "Devriye", ultra: "Sirren" },
+                    { word: "Aşçı", easy: "Mutfak", medium: "Yemek", hard: "Tarif", ultra: "Şapka" },
+                    { word: "Yazılımcı", easy: "Kod", medium: "Ekran", hard: "Hata", ultra: "Kahve" }
+                ]
+            },
+            "esyalar": {
+                name: "Eşyalar & Nesneler",
+                words: [
+                    { word: "Saat", easy: "Zaman", medium: "Yelkovan", hard: "Kol", ultra: "Tik-Tak" },
+                    { word: "Ayna", easy: "Yansıma", medium: "Cam", hard: "Görüntü", ultra: "Yüz" },
+                    { word: "Şemsiye", easy: "Yağmur", medium: "Islak", hard: "Rüzgar", ultra: "Açılmak" }
+                ]
+            },
+            "cografya": {
+                name: "Coğrafya & Şehirler",
+                words: [
+                    { word: "İstanbul", easy: "Boğaz", medium: "Köprü", hard: "Kalabalık", ultra: "Trafik" },
+                    { word: "Piramit", easy: "Mısır", medium: "Çöl", hard: "Firavun", ultra: "Üçgen" },
+                    { word: "Kutup", easy: "Buzul", medium: "Soğuk", hard: "Penguen", ultra: "Beyaz" }
+                ]
+            },
+            "sinema": {
+                name: "Sinema & Dizi",
+                words: [
+                    { word: "Batman", easy: "Yarasa", medium: "Pelerin", hard: "Gotham", ultra: "Zengin" },
+                    { word: "Joker", easy: "Palyaço", medium: "Kahkaha", hard: "Makyaj", ultra: "Kaos" },
+                    { word: "Matrix", easy: "Kırmızı", medium: "Kod", hard: "Ajan", ultra: "Hap" }
+                ]
+            },
+            "spor": {
+                name: "Spor & Oyunlar",
+                words: [
+                    { word: "Futbol", easy: "Kale", medium: "Hakem", hard: "Ofsayt", ultra: "Çim" },
+                    { word: "Basketbol", easy: "Pota", medium: "Smaç", hard: "Parke", ultra: "Uzun" },
+                    { word: "Satranç", easy: "Şah", medium: "Tahta", hard: "Hamle", ultra: "Mat" }
+                ]
+            },
+            "doga": {
+                name: "Doğa & Hava",
+                words: [
+                    { word: "Şimşek", easy: "Işık", medium: "Bulut", hard: "Ses", ultra: "Çakmak" },
+                    { word: "Deprem", easy: "Sarsıntı", medium: "Fay", hard: "Afet", ultra: "Çatlak" },
+                    { word: "Volkan", easy: "Lav", medium: "Dağ", hard: "Püskürme", ultra: "Kül" }
+                ]
+            },
+            "nsfw": {
+                name: "NSFW +18 & Argo 🔥",
+                words: [
+                    { word: "Prezervatif", easy: "Korunma", medium: "Lateks", hard: "Kılıf", ultra: "Paket" },
+                    { word: "Sakso", easy: "Ağız", medium: "Eylem", hard: "Pürüzsüz", ultra: "Diz" },
+                    { word: "Seks", easy: "Yatak", medium: "Temas", hard: "Tutku", ultra: "Ter" },
+                    { word: "Fantezi", easy: "Kırbaç", medium: "Rol", hard: "Zihin", ultra: "Karanlık" },
+                    { word: "Mastürbasyon", easy: "Yalnız", medium: "El", hard: "Banyo", ultra: "Pornografi" },
+                    { word: "Am", easy: "Anatomi", medium: "Cinsellik", hard: "Sıcaklık", ultra: "Kilit" },
+                    { word: "Yarak", easy: "Sert", medium: "Erkek", hard: "Büyüklük", ultra: "Damar" }
+                ]
+            }
+        };
+
+        // Audio System via Web Audio API (No External Files Required)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'reveal') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'buzzer') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(350, now);
+                    osc.frequency.linearRampToValueAtTime(150, now + 0.6);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else if (type === 'win') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.3); // G5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch(e) {
+                console.log("Audio play error", e);
+            }
+        }
+
+        function triggerVibration(pattern = [50]) {
+            if ("vibrate" in navigator) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        // State Variables
+        let players = [];
+        let selectedCategories = Object.keys(categoryDatabase);
+        let selectedDifficulty = 1; // 1: Easy, 2: Medium, 3: Hard, 4: Ultra Hard
+        let timerSeconds = 120;
+        let timerInterval = null;
+
+        let currentPlayerIndex = 0;
+        let fakerIndex = -1;
+        let lastFakerIndex = -1;
+        let selectedWordObj = null;
+
+        let votes = {};
+        let currentVoterIndex = 0;
+        let usedWordIndices = new Set();
+
+        // DOM Elements
+        const formAddPlayer = document.getElementById('form-add-player');
+        const inputPlayerName = document.getElementById('input-player-name');
+        const playersList = document.getElementById('players-list');
+        const itemCount = document.getElementById('player-count');
+        const categoriesContainer = document.getElementById('categories-container');
+        const btnToggleAllCategories = document.getElementById('btn-toggle-all-categories');
+        const sliderDifficulty = document.getElementById('slider-difficulty');
+        const difficultyLabel = document.getElementById('difficulty-label');
+        const selectTimer = document.getElementById('select-timer');
+        const btnStartGame = document.getElementById('btn-start-game');
+
+        const screenLobby = document.getElementById('screen-lobby');
+        const screenPass = document.getElementById('screen-pass');
+        const screenReveal = document.getElementById('screen-reveal');
+        const screenTimer = document.getElementById('screen-timer');
+        const screenVoting = document.getElementById('screen-voting');
+        const screenResult = document.getElementById('screen-result');
+
+        const passPlayerName = document.getElementById('pass-player-name');
+        const btnHoldReveal = document.getElementById('btn-hold-reveal');
+        const roleBlurOverlay = document.getElementById('role-blur-overlay');
+        const roleCard = document.getElementById('role-card');
+        const roleContent = document.getElementById('role-content');
+        const revealPlayerTitle = document.getElementById('reveal-player-title');
+        const btnNextPlayer = document.getElementById('btn-next-player');
+
+        const timerDisplay = document.getElementById('timer-display');
+        const btnSkipTimer = document.getElementById('btn-skip-timer');
+
+        const voterName = document.getElementById('voter-name');
+        const votingOptions = document.getElementById('voting-options');
+
+        const resultHeaderBox = document.getElementById('result-header-box');
+        const resultIcon = document.getElementById('result-icon');
+        const resultTitle = document.getElementById('result-title');
+        const resultDesc = document.getElementById('result-desc');
+        const resultRealWord = document.getElementById('result-real-word');
+        const resultHintWord = document.getElementById('result-hint-word');
+        const resultFakerName = document.getElementById('result-faker-name');
+        const btnRestart = document.getElementById('btn-restart');
+
+        const gameStatusBadge = document.getElementById('game-status-badge');
+        const modalMessage = document.getElementById('modal-message');
+        const modalText = document.getElementById('modal-text');
+        const modalClose = document.getElementById('modal-close');
+
+        function showModal(msg) {
+            modalText.textContent = msg;
+            modalMessage.classList.remove('hidden');
+        }
+        modalClose.addEventListener('click', () => {
+            playSound('click');
+            modalMessage.classList.add('hidden');
+        });
+
+        // Init Categories UI
+        function renderCategories() {
+            categoriesContainer.innerHTML = "";
+            Object.keys(categoryDatabase).forEach(catKey => {
+                const cat = categoryDatabase[catKey];
+                const isChecked = selectedCategories.includes(catKey);
+                
+                const btn = document.createElement('button');
+                btn.type = "button";
+                btn.className = `p-2.5 rounded-xl border text-xs font-semibold text-left transition-all flex items-center justify-between cursor-pointer ${
+                    isChecked 
+                    ? 'bg-purple-600/20 border-purple-500/50 text-purple-200' 
+                    : 'bg-slate-800/40 border-slate-700/40 text-slate-500'
+                }`;
+                btn.innerHTML = `
+                    <span class="truncate">${cat.name}</span>
+                    <span class="text-xs">${isChecked ? '✓' : ''}</span>
+                `;
+                btn.onclick = () => {
+                    playSound('click');
+                    if (selectedCategories.includes(catKey)) {
+                        if (selectedCategories.length === 1) {
+                            showModal("En az 1 kategori seçili olmalıdır!");
+                            return;
+                        }
+                        selectedCategories = selectedCategories.filter(c => c !== catKey);
+                    } else {
+                        selectedCategories.push(catKey);
+                    }
+                    renderCategories();
+                };
+                categoriesContainer.appendChild(btn);
+            });
+        }
+        renderCategories();
+
+        btnToggleAllCategories.addEventListener('click', () => {
+            playSound('click');
+            if (selectedCategories.length === Object.keys(categoryDatabase).length) {
+                selectedCategories = [Object.keys(categoryDatabase)[0]];
+            } else {
+                selectedCategories = Object.keys(categoryDatabase);
+            }
+            renderCategories();
+        });
+
+        // Difficulty Slider
+        sliderDifficulty.addEventListener('input', (e) => {
+            playSound('click');
+            selectedDifficulty = parseInt(e.target.value);
+            if (selectedDifficulty === 1) {
+                difficultyLabel.textContent = "Kolay";
+                difficultyLabel.className = "text-xs font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20";
+            } else if (selectedDifficulty === 2) {
+                difficultyLabel.textContent = "Orta";
+                difficultyLabel.className = "text-xs font-black text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20";
+            } else if (selectedDifficulty === 3) {
+                difficultyLabel.textContent = "Zor";
+                difficultyLabel.className = "text-xs font-black text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20";
+            } else {
+                difficultyLabel.textContent = "Ultra Zor 🔥";
+                difficultyLabel.className = "text-xs font-black text-pink-400 bg-pink-500/20 px-2.5 py-0.5 rounded-full border border-pink-500/40 animate-pulse";
+            }
+        });
+
+        // Player Management
+        formAddPlayer.addEventListener('submit', (e) => {
+            e.preventDefault();
+            playSound('click');
+            const name = inputPlayerName.value.trim();
+            if (!name) return;
+            if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                showModal("Bu isimde bir oyuncu zaten var!");
+                return;
+            }
+
+            const emoji = avatarEmojis[Math.floor(Math.random() * avatarEmojis.length)];
+            players.push({ name, emoji });
+            inputPlayerName.value = "";
+            renderPlayers();
+        });
+
+        function renderPlayers() {
+            if (players.length === 0) {
+                playersList.innerHTML = `<div id="empty-players" class="text-center py-6 text-slate-500 text-xs italic">Henüz oyuncu eklenmedi.</div>`;
+                itemCount.textContent = "0 Oyuncu";
+                btnStartGame.disabled = true;
+                return;
+            }
+
+            playersList.innerHTML = "";
+            players.forEach((p, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between bg-slate-800/50 border border-slate-700/50 px-3.5 py-2.5 rounded-xl text-xs animate-slide-in";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-base">${p.emoji}</span>
+                        <span class="font-semibold text-slate-200">${escapeHtml(p.name)}</span>
+                    </div>
+                    <button type="button" onclick="removePlayer(${idx})" class="text-slate-500 hover:text-rose-400 p-1 cursor-pointer transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                `;
+                playersList.appendChild(item);
+            });
+
+            itemCount.textContent = `${players.length} Oyuncu`;
+            btnStartGame.disabled = players.length < 3;
+        }
+
+        window.removePlayer = function(idx) {
+            playSound('click');
+            players.splice(idx, 1);
+            renderPlayers();
+        };
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // START GAME
+        btnStartGame.addEventListener('click', () => {
+            playSound('click');
+            triggerVibration([100]);
+            if (players.length < 3) return;
+
+            // Pick Faker (Prevent repeat faker if possible)
+            let newFaker = Math.floor(Math.random() * players.length);
+            if (players.length > 2 && newFaker === lastFakerIndex && Math.random() > 0.1) {
+                newFaker = (newFaker + 1) % players.length;
+            }
+            fakerIndex = newFaker;
+            lastFakerIndex = fakerIndex;
+
+            // Pick Word from active categories
+            let pool = [];
+            selectedCategories.forEach(catKey => {
+                pool = pool.concat(categoryDatabase[catKey].words);
+            });
+
+            let availablePool = pool.filter((_, idx) => !usedWordIndices.has(idx));
+            if (availablePool.length === 0) {
+                usedWordIndices.clear();
+                availablePool = pool;
+            }
+
+            selectedWordObj = availablePool[Math.floor(Math.random() * availablePool.length)];
+
+            currentPlayerIndex = 0;
+            votes = {};
+            players.forEach((_, i) => votes[i] = 0);
+
+            gameStatusBadge.textContent = "Rol Dağıtımı";
+            screenLobby.classList.add('hidden');
+            showPassScreen();
+        });
+
+        function showPassScreen() {
+            passPlayerName.textContent = `${players[currentPlayerIndex].emoji} ${players[currentPlayerIndex].name}`;
+            screenPass.classList.remove('hidden');
+            screenReveal.classList.add('hidden');
+        }
+
+        // HOLD TO REVEAL LOGIC
+        let holdTimeout = null;
+
+        function startHoldReveal() {
+            playSound('reveal');
+            triggerVibration([40]);
+            
+            screenPass.classList.add('hidden');
+            screenReveal.classList.remove('hidden');
+
+            revealPlayerTitle.textContent = `${players[currentPlayerIndex].emoji} ${players[currentPlayerIndex].name} için Özel Bilgi`;
+
+            let hintText = selectedWordObj.easy;
+            if (selectedDifficulty === 2) hintText = selectedWordObj.medium;
+            if (selectedDifficulty === 3) hintText = selectedWordObj.hard;
+            if (selectedDifficulty === 4) hintText = selectedWordObj.ultra;
+
+            if (currentPlayerIndex === fakerIndex) {
+                roleCard.className = "p-6 rounded-3xl border bg-rose-950/40 border-rose-500/40 text-center";
+                roleContent.innerHTML = `
+                    <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30">SEN SAHTEKARSIN 🕵️‍♂️</span>
+                    <h3 class="text-3xl font-black text-white mt-3">İpucun: <span class="text-amber-400 font-mono">"${hintText}"</span></h3>
+                    <p class="text-slate-300 text-xs mt-2 leading-relaxed">Gerçek kelimeyi bilmiyorsun! Masada çaktırmadan bu ipucunu kullanarak uyum sağla.</p>
+                `;
+            } else {
+                roleCard.className = "p-6 rounded-3xl border bg-purple-950/40 border-purple-500/40 text-center";
+                roleContent.innerHTML = `
+                    <span class="text-[10px] font-black uppercase tracking-widest text-purple-300 bg-purple-500/20 px-3 py-1 rounded-full border border-purple-500/30">MASUM OYUNCU 😇</span>
+                    <h3 class="text-3xl font-black text-white mt-3">Gizli Kelime: <span class="text-purple-300 font-mono">"${selectedWordObj.word}"</span></h3>
+                    <p class="text-slate-300 text-xs mt-2 leading-relaxed">Kelimeyi açık etmeden bir ipucu ver ve Sahtekarı yakala!</p>
+                `;
+            }
+
+            // Remove blur
+            setTimeout(() => {
+                roleBlurOverlay.classList.add('revealed');
+            }, 50);
+        }
+
+        function endHoldReveal() {
+            roleBlurOverlay.classList.remove('revealed');
+        }
+
+        // Mouse & Touch events for Hold to Reveal
+        btnHoldReveal.addEventListener('mousedown', startHoldReveal);
+        btnHoldReveal.addEventListener('mouseup', endHoldReveal);
+        btnHoldReveal.addEventListener('mouseleave', endHoldReveal);
+
+        btnHoldReveal.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startHoldReveal();
+        });
+        btnHoldReveal.addEventListener('touchend', endHoldReveal);
+
+        // NEXT PLAYER
+        btnNextPlayer.addEventListener('click', () => {
+            playSound('click');
+            currentPlayerIndex++;
+            if (currentPlayerIndex < players.length) {
+                showPassScreen();
+            } else {
+                startTimerPhase();
+            }
+        });
+
+        // TIMER PHASE
+        function startTimerPhase() {
+            screenReveal.classList.add('hidden');
+            screenTimer.classList.remove('hidden');
+            gameStatusBadge.textContent = "Tartışma Süresi";
+
+            const mins = parseInt(selectTimer.value);
+            timerSeconds = mins * 60;
+            updateTimerDisplay();
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                updateTimerDisplay();
+
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    playSound('buzzer');
+                    triggerVibration([200, 100, 200]);
+                    setTimeout(startVotingPhase, 1200);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const s = (timerSeconds % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${m}:${s}`;
+        }
+
+        btnSkipTimer.addEventListener('click', () => {
+            playSound('click');
+            clearInterval(timerInterval);
+            startVotingPhase();
+        });
+
+        // VOTING PHASE
+        function startVotingPhase() {
+            screenTimer.classList.add('hidden');
+            screenVoting.classList.remove('hidden');
+            gameStatusBadge.textContent = "Oylama";
+
+            currentVoterIndex = 0;
+            renderVotingTurn();
+        }
+
+        function renderVotingTurn() {
+            voterName.textContent = `${players[currentVoterIndex].emoji} ${players[currentVoterIndex].name}`;
+            votingOptions.innerHTML = "";
+
+            players.forEach((p, idx) => {
+                if (idx === currentVoterIndex) return; // Self vote disabled
+
+                const btn = document.createElement('button');
+                btn.className = "w-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 p-3.5 rounded-2xl text-left font-bold text-slate-200 text-sm flex justify-between items-center transition-all cursor-pointer backdrop-blur-md active:scale-98";
+                btn.innerHTML = `
+                    <span class="flex items-center gap-2">
+                        <span>${p.emoji}</span>
+                        <span>${escapeHtml(p.name)}</span>
+                    </span>
+                    <span class="text-xs text-purple-400 font-extrabold uppercase">Oy Ver &rarr;</span>
+                `;
+                btn.onclick = () => {
+                    playSound('click');
+                    triggerVibration([40]);
+                    handleVote(idx);
+                };
+                votingOptions.appendChild(btn);
+            });
+        }
+
+        function handleVote(targetIdx) {
+            votes[targetIdx] = (votes[targetIdx] || 0) + 1;
+            currentVoterIndex++;
+
+            if (currentVoterIndex < players.length) {
+                renderVotingTurn();
+            } else {
+                calculateResults();
+            }
+        }
+
+        // RESULTS CALCULATOR WITH TIE-BREAKER
+        function calculateResults() {
+            screenVoting.classList.add('hidden');
+            screenResult.classList.remove('hidden');
+            gameStatusBadge.textContent = "Sonuçlar";
+
+            // Find highest voted player(s)
+            let maxVotes = -1;
+            let accusedIndices = [];
+
+            for (let idx in votes) {
+                if (votes[idx] > maxVotes) {
+                    maxVotes = votes[idx];
+                    accusedIndices = [parseInt(idx)];
+                } else if (votes[idx] === maxVotes) {
+                    accusedIndices.push(parseInt(idx));
+                }
+            }
+
+            let hintText = selectedWordObj.easy;
+            if (selectedDifficulty === 2) hintText = selectedWordObj.medium;
+            if (selectedDifficulty === 3) hintText = selectedWordObj.hard;
+            if (selectedDifficulty === 4) hintText = selectedWordObj.ultra;
+
+            resultRealWord.textContent = selectedWordObj.word;
+            resultHintWord.textContent = hintText;
+            resultFakerName.textContent = `${players[fakerIndex].emoji} ${players[fakerIndex].name}`;
+
+            if (accusedIndices.length > 1) {
+                // TIE-BREAKER (Sahtekar Wins due to tie)
+                playSound('buzzer');
+                resultHeaderBox.className = "p-6 rounded-3xl border bg-amber-950/30 border-amber-500/30 text-center space-y-2 backdrop-blur-md";
+                resultIcon.textContent = "⚖️";
+                resultTitle.textContent = "OYLAR EŞİT ÇIKTI!";
+                resultTitle.className = "text-2xl font-black text-amber-400 tracking-tight";
+                resultDesc.textContent = `Masumlar kararsız kaldı! Oylar eşit dağıldığı için Sahtekar (${players[fakerIndex].name}) aradan sıyrılmayı başardı!`;
+            } else if (accusedIndices[0] === fakerIndex) {
+                // Innocent Win
+                playSound('win');
+                resultHeaderBox.className = "p-6 rounded-3xl border bg-emerald-950/30 border-emerald-500/30 text-center space-y-2 backdrop-blur-md";
+                resultIcon.textContent = "🎉";
+                resultTitle.textContent = "MASUMLAR KAZANDI!";
+                resultTitle.className = "text-2xl font-black text-emerald-400 tracking-tight";
+                resultDesc.textContent = `Tebrikler! Yalancının mumu söndürüldü! Sahtekar olan ${players[fakerIndex].name} tespit edildi.`;
+            } else {
+                // Faker Win
+                playSound('buzzer');
+                resultHeaderBox.className = "p-6 rounded-3xl border bg-rose-950/30 border-rose-500/30 text-center space-y-2 backdrop-blur-md";
+                resultIcon.textContent = "🕵️‍♂️";
+                resultTitle.textContent = "SAHTEKAR KAZANDI!";
+                resultTitle.className = "text-2xl font-black text-rose-400 tracking-tight";
+                resultDesc.textContent = `Yanlış kişiyi seçtiniz! Sahtekar ${players[fakerIndex].name} herkesi kandırmayı başardı.`;
+            }
+        }
+
+        // RESTART GAME
+        btnRestart.addEventListener('click', () => {
+            playSound('click');
+            screenResult.classList.add('hidden');
+            screenLobby.classList.remove('hidden');
+            gameStatusBadge.textContent = "Lobi";
+        });
+    </script>
+</body>
+</html>
