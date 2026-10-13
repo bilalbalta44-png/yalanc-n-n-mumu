@@ -149,7 +149,7 @@
 
             <!-- Settings Card -->
             <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 space-y-4 backdrop-blur-md">
-                <!-- Difficulty Slider (1: Easy, 2: Medium, 3: Hard, 4: Ultra Hard) -->
+                <!-- Difficulty Slider -->
                 <div class="space-y-2">
                     <div class="flex justify-between items-center">
                         <label class="text-xs font-semibold text-slate-300">İpucu Zorluğu (Sahtekar İçin)</label>
@@ -196,24 +196,16 @@
                 <h2 id="pass-player-name" class="text-3xl font-black text-white">Oyuncu Adı</h2>
             </div>
             <p class="text-slate-400 text-xs max-w-xs mx-auto bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl backdrop-blur-md">
-                Ekranı sadece bu oyuncu görsün. Gizli rolünü görmek için aşağıdaki butona <strong class="text-purple-300">BASILI TUTUN</strong>.
+                Cihazı yukarıda adı yazan oyuncuya verin. Hazır olduğunda butona tıklasın.
             </p>
-
-            <!-- Hold To Reveal Button Container -->
-            <div class="relative max-w-xs mx-auto">
-                <button id="btn-hold-reveal" 
-                    class="w-full bg-slate-900 hover:bg-slate-800 border border-purple-500/40 text-purple-300 font-bold py-4 rounded-2xl transition-all active:scale-95 text-sm cursor-pointer select-none flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span>Rolü Görmek İçin Basılı Tut</span>
-                </button>
-            </div>
+            <button id="btn-goto-reveal" 
+                class="btn-shimmer w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-purple-600/20 active:scale-98 text-sm cursor-pointer">
+                Rolümü Görmeye Hazırım &rarr;
+            </button>
         </div>
 
-        <!-- 3. ROLE REVEAL SCREEN (HOLD STATE) -->
-        <div id="screen-reveal" class="hidden space-y-6 text-center py-4 animate-slide-in">
+        <!-- 3. ROLE REVEAL SCREEN (TOGGLE / CLICK TO OPEN-CLOSE) -->
+        <div id="screen-reveal" class="hidden space-y-5 text-center py-4 animate-slide-in">
             <div class="space-y-1">
                 <span class="text-xs font-semibold text-slate-400">Gizli Bilgi Ekranı</span>
                 <h2 id="reveal-player-title" class="text-lg font-bold text-slate-200"></h2>
@@ -228,10 +220,19 @@
                 </div>
             </div>
 
-            <p class="text-[11px] text-slate-500 italic">Bilgiyi gizlemek için parmağınızı çekin, ardından sonraki oyuncuya geçin.</p>
+            <!-- Toggle Button (Click to Open / Click to Close) -->
+            <button id="btn-toggle-reveal" 
+                class="w-full bg-slate-900 hover:bg-slate-800 border border-purple-500/40 text-purple-300 font-bold py-3.5 rounded-2xl transition-all active:scale-95 text-xs cursor-pointer select-none flex items-center justify-center gap-2 shadow-lg shadow-purple-900/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span id="toggle-btn-text">Rolü Göster / Aç</span>
+            </button>
 
+            <!-- Next Player Button -->
             <button id="btn-next-player" 
-                class="btn-shimmer w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3.5 rounded-2xl transition-all shadow-xl shadow-purple-600/20 active:scale-98 text-sm cursor-pointer">
+                class="btn-shimmer w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-purple-600/20 active:scale-98 text-sm cursor-pointer">
                 Gizle ve Devam Et &rarr;
             </button>
         </div>
@@ -428,7 +429,7 @@
             }
         };
 
-        // Audio System via Web Audio API (No External Files Required)
+        // Audio System via Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playSound(type) {
@@ -470,9 +471,9 @@
                     osc.stop(now + 0.6);
                 } else if (type === 'win') {
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(523.25, now); // C5
-                    osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
-                    osc.frequency.setValueAtTime(783.99, now + 0.3); // G5
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.15);
+                    osc.frequency.setValueAtTime(783.99, now + 0.3);
                     gain.gain.setValueAtTime(0.2, now);
                     gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
                     osc.start(now);
@@ -492,7 +493,7 @@
         // State Variables
         let players = [];
         let selectedCategories = Object.keys(categoryDatabase);
-        let selectedDifficulty = 1; // 1: Easy, 2: Medium, 3: Hard, 4: Ultra Hard
+        let selectedDifficulty = 1;
         let timerSeconds = 120;
         let timerInterval = null;
 
@@ -525,7 +526,9 @@
         const screenResult = document.getElementById('screen-result');
 
         const passPlayerName = document.getElementById('pass-player-name');
-        const btnHoldReveal = document.getElementById('btn-hold-reveal');
+        const btnGotoReveal = document.getElementById('btn-goto-reveal');
+        const btnToggleReveal = document.getElementById('btn-toggle-reveal');
+        const toggleBtnText = document.getElementById('toggle-btn-text');
         const roleBlurOverlay = document.getElementById('role-blur-overlay');
         const roleCard = document.getElementById('role-card');
         const roleContent = document.getElementById('role-content');
@@ -690,7 +693,6 @@
             triggerVibration([100]);
             if (players.length < 3) return;
 
-            // Pick Faker (Prevent repeat faker if possible)
             let newFaker = Math.floor(Math.random() * players.length);
             if (players.length > 2 && newFaker === lastFakerIndex && Math.random() > 0.1) {
                 newFaker = (newFaker + 1) % players.length;
@@ -698,7 +700,6 @@
             fakerIndex = newFaker;
             lastFakerIndex = fakerIndex;
 
-            // Pick Word from active categories
             let pool = [];
             selectedCategories.forEach(catKey => {
                 pool = pool.concat(categoryDatabase[catKey].words);
@@ -727,17 +728,19 @@
             screenReveal.classList.add('hidden');
         }
 
-        // HOLD TO REVEAL LOGIC
-        let holdTimeout = null;
-
-        function startHoldReveal() {
+        // Go to Reveal Screen from Pass Screen
+        btnGotoReveal.addEventListener('click', () => {
             playSound('reveal');
             triggerVibration([40]);
-            
+
             screenPass.classList.add('hidden');
             screenReveal.classList.remove('hidden');
 
             revealPlayerTitle.textContent = `${players[currentPlayerIndex].emoji} ${players[currentPlayerIndex].name} için Özel Bilgi`;
+
+            // Reset blur state for new player
+            roleBlurOverlay.classList.remove('revealed');
+            toggleBtnText.textContent = "Rolü Göster / Aç";
 
             let hintText = selectedWordObj.easy;
             if (selectedDifficulty === 2) hintText = selectedWordObj.medium;
@@ -759,27 +762,19 @@
                     <p class="text-slate-300 text-xs mt-2 leading-relaxed">Kelimeyi açık etmeden bir ipucu ver ve Sahtekarı yakala!</p>
                 `;
             }
-
-            // Remove blur
-            setTimeout(() => {
-                roleBlurOverlay.classList.add('revealed');
-            }, 50);
-        }
-
-        function endHoldReveal() {
-            roleBlurOverlay.classList.remove('revealed');
-        }
-
-        // Mouse & Touch events for Hold to Reveal
-        btnHoldReveal.addEventListener('mousedown', startHoldReveal);
-        btnHoldReveal.addEventListener('mouseup', endHoldReveal);
-        btnHoldReveal.addEventListener('mouseleave', endHoldReveal);
-
-        btnHoldReveal.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            startHoldReveal();
         });
-        btnHoldReveal.addEventListener('touchend', endHoldReveal);
+
+        // TOGGLE REVEAL BUTTON (Click to Open / Click to Close)
+        btnToggleReveal.addEventListener('click', () => {
+            playSound('click');
+            triggerVibration([30]);
+            const isRevealed = roleBlurOverlay.classList.toggle('revealed');
+            if (isRevealed) {
+                toggleBtnText.textContent = "Rolü Gizle / Kapat";
+            } else {
+                toggleBtnText.textContent = "Rolü Göster / Aç";
+            }
+        });
 
         // NEXT PLAYER
         btnNextPlayer.addEventListener('click', () => {
@@ -843,7 +838,7 @@
             votingOptions.innerHTML = "";
 
             players.forEach((p, idx) => {
-                if (idx === currentVoterIndex) return; // Self vote disabled
+                if (idx === currentVoterIndex) return;
 
                 const btn = document.createElement('button');
                 btn.className = "w-full bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 p-3.5 rounded-2xl text-left font-bold text-slate-200 text-sm flex justify-between items-center transition-all cursor-pointer backdrop-blur-md active:scale-98";
@@ -880,7 +875,6 @@
             screenResult.classList.remove('hidden');
             gameStatusBadge.textContent = "Sonuçlar";
 
-            // Find highest voted player(s)
             let maxVotes = -1;
             let accusedIndices = [];
 
@@ -903,7 +897,6 @@
             resultFakerName.textContent = `${players[fakerIndex].emoji} ${players[fakerIndex].name}`;
 
             if (accusedIndices.length > 1) {
-                // TIE-BREAKER (Sahtekar Wins due to tie)
                 playSound('buzzer');
                 resultHeaderBox.className = "p-6 rounded-3xl border bg-amber-950/30 border-amber-500/30 text-center space-y-2 backdrop-blur-md";
                 resultIcon.textContent = "⚖️";
@@ -911,7 +904,6 @@
                 resultTitle.className = "text-2xl font-black text-amber-400 tracking-tight";
                 resultDesc.textContent = `Masumlar kararsız kaldı! Oylar eşit dağıldığı için Sahtekar (${players[fakerIndex].name}) aradan sıyrılmayı başardı!`;
             } else if (accusedIndices[0] === fakerIndex) {
-                // Innocent Win
                 playSound('win');
                 resultHeaderBox.className = "p-6 rounded-3xl border bg-emerald-950/30 border-emerald-500/30 text-center space-y-2 backdrop-blur-md";
                 resultIcon.textContent = "🎉";
@@ -919,7 +911,6 @@
                 resultTitle.className = "text-2xl font-black text-emerald-400 tracking-tight";
                 resultDesc.textContent = `Tebrikler! Yalancının mumu söndürüldü! Sahtekar olan ${players[fakerIndex].name} tespit edildi.`;
             } else {
-                // Faker Win
                 playSound('buzzer');
                 resultHeaderBox.className = "p-6 rounded-3xl border bg-rose-950/30 border-rose-500/30 text-center space-y-2 backdrop-blur-md";
                 resultIcon.textContent = "🕵️‍♂️";
